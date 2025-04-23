@@ -12,4 +12,9 @@
 - 팀 협업을 위한 일정 공유
 
 
+<br>
+<br>
+
+## License
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
 
