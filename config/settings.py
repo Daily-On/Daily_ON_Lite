@@ -11,11 +11,23 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import socket #개발과 배포환경 분리(ALLOWED_HOSTS참고)
+import os
+import sys
+import json
+
+from dj_rest_auth import registration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# scret키 분리
+ROOT_DIR = os.path.dirname(BASE_DIR)
+SECRET_BASE_FILE = os.path.join(BASE_DIR, 'secrets.json')
 
+secrets = json.loads(open(SECRET_BASE_FILE).read())
+for key, value in secrets.items():
+    setattr(sys.modules[__name__], key, value)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -25,7 +37,13 @@ SECRET_KEY = 'django-insecure--&8fww(ej(uagz6o8a*cj#dwd0sz!lh_e#emucd!oi@vulrvyf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['52.79.241.99']
+# 개발과 배포환경 분리
+hostname = socket.gethostname()
+if hostname == 'ip-172-31-46-252':
+    ALLOWED_HOSTS = ['52.79.241.99'] #EC2 퍼블릭 --> 인스턴스 재시작 시 다시 입려해주어야함
+    
+else:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] # 로컬
 
 
 # Application definition
@@ -37,7 +55,27 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 추가한 기능 앱으로 등록
+    'users',
+    'django.contrib.sites',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'dj_rest_auth',
+    'dj_rest.registration',
+
+    #allauth 추가
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.kakao',
+    'allauth.socialaccount.providers.naver',
+
 ]
+
+SITE_ID = 1
+AUTH_USER_MODEL = 'users.User'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -47,7 +85,19 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # 추가
 ]
+
+LOGIN_REDIRECT_URL = '/'
+
+
+AUTHENTICATION_BACKENDS = (
+    # Django에서 사용자 이름을 기준으로 로그인 하도록 설정
+    'django.contrib.auth.backends.ModelBackend',
+    #'aullauth'의 인증방식 추가
+    'allauth.account.auth_backends.AuthenticationBackend',
+
+)
 
 ROOT_URLCONF = 'config.urls'
 
